@@ -1,0 +1,62 @@
+import Foundation
+import PlaygroundSupport
+
+PlaygroundPage.current.needsIndefiniteExecution = true
+
+let urlRequestLotus = "lotus"
+let urlRequestOpt = "opt"
+let urlRequestGlobal = "https://api.magicthegathering.io/v1/cards?name="
+
+
+struct CardsInfo: Decodable {
+    let cards: [Card]
+}
+struct Card: Decodable {
+    let name: String?
+    let manaCost: String?
+    let cmc: Double?
+    let rarity: String?
+    let type: String?
+    
+}
+
+func getData(urlRequest: String) {
+    let urlRequest = URL(string: urlRequest)
+    guard let url = urlRequest else { return }
+    
+    URLSession.shared.dataTask(with: url  ) { data, response, error in
+        
+        guard error == nil else {
+            print(error?.localizedDescription ?? "noDesc")
+            return
+        }
+        if let response = response as? HTTPURLResponse, response.statusCode == 200 {
+            print("Код ответа - \(response.statusCode)")
+        }
+        guard let data = data else { return }
+        do {
+            let dataCard = try JSONDecoder().decode(CardsInfo.self, from: data)
+            print("""
+              \n---------------------------------------\n
+              Card name: \(dataCard.cards.first?.name ?? "")
+              Mana cost: \(dataCard.cards.first?.manaCost ?? "")
+              Cmc: \(dataCard.cards.first?.cmc ?? 0)
+              Type: \(dataCard.cards.first?.type ?? "")
+              Rarity: \(dataCard.cards.first?.rarity ?? "")
+              
+              \n---------------------------------------\n
+              """)
+        } catch {
+            print(error)
+        }
+    }.resume()
+    
+}
+
+func doUrl(with urlRequestGlobal: String, and finalPartUrl: String) -> String {
+    let urlString = "\(urlRequestGlobal)\(finalPartUrl)"
+    return urlString
+}
+
+getData(urlRequest: doUrl(with: urlRequestGlobal, and: urlRequestOpt))
+getData(urlRequest: doUrl(with: urlRequestGlobal, and: urlRequestLotus))
